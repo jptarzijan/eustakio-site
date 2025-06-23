@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Two Editable Panels</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+    }
+    .login-page {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      width: 100vw;
+      background: #021927;
+    }
+    .login-mic-btn {
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      cursor: pointer;
+      box-shadow: none;
+      transition: none;
+    }
+    .login-mic-btn:hover {
+      opacity: 0.9;
+    }
+    .login-mic-btn img {
+      width: 220px;
+      height: auto;
+      display: block;
+    }
+    .main-interface { display: none; }
+    .logo-top {
+      width: 220px;
+      margin: 0 auto 12px auto;
+      display: block;
+    }
+    .logo-top-container {
+      width: 100vw;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      margin-top: 12px;
+      margin-bottom: 0;
+    }
+    .logo2-top-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      z-index: 100;
+      pointer-events: none;
+    }
+    .logo2-top {
+      width: 32px;
+      height: 32px;
+      margin-top: 12px;
+      display: block;
+      pointer-events: auto;
+      position: fixed;
+      left: 50%;
+      top: 12px;
+      transform: translateX(-50%);
+      z-index: 101;
+      cursor: grab;
+    }
+    .top-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      display: flex;
+      align-items: center;
+      padding: 4px 22px 12px 32px;
+      min-height: 72px;
+      background: transparent;
+      z-index: 10;
+    }
+    .top-bar button,
+    .templates-btn-panel,
+    .send-btn,
+    .login-mic-btn {
+      width: 110px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      background: #021927;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+      transition: background 0.2s;
+      font-size: 1rem;
+      font-family: inherit;
+    }
+    .top-bar button:hover,
+    .templates-btn-panel:hover,
+    .send-btn:hover,
+    .login-mic-btn:hover {
+      background: #0d293a;
+    }
+    .top-bar button[aria-label="Microphone"] svg {
+      margin: 0;
+      stroke: #fff;
+    }
+    .container {
+      display: flex;
+      height: calc(100vh - 2px);
+      width: 100vw;
+      padding: 0 12px 0 12px;
+      box-sizing: border-box;
+      align-items: stretch;
+      justify-content: stretch;
+      position: relative;
+    }
+    .panel {
+      flex: 1 1 0;
+      margin: 0;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      padding: 24px 18px 24px 18px;
+      display: flex;
+      flex-direction: column;
+      min-height: 96vh;
+      position: relative;
+    }
+    .divider {
+      width: 6px;
+      background: #fff;
+      cursor: col-resize;
+      border-radius: 4px;
+      margin: 0 2px;
+      position: relative;
+      z-index: 3;
+      transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 32px;
+      height: 100%;
+    }
+    .divider:hover, .divider.active {
+      background: #e0e0e0;
+    }
+    .arrow-btn {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      background: #021927;
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+      transition: background 0.2s;
+      z-index: 4;
+      font-size: 1.2rem;
+      pointer-events: auto;
+    }
+    .arrow-btn:hover {
+      background: #0d293a;
+    }
+    .templates-btn-panel-wrapper {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      z-index: 1002;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+    .templates-btn-panel {
+      background: #021927;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      font-family: inherit;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+      transition: background 0.2s;
+      width: 110px;
+      height: 40px;
+      padding: 0;
+    }
+    .templates-btn-panel:hover,
+    .templates-btn-panel:focus {
+      background: #0d293a;
+    }
+    .templates-dropdown {
+      display: none;
+      z-index: 2000;
+      border: 1px solid #021927;
+    }
+    .templates-btn-panel-wrapper.show-dropdown .templates-dropdown {
+      display: block;
+    }
+    .templates-dropdown-option {
+      padding: 10px 24px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+    .templates-dropdown-option:hover {
+      background: #f4f4f4;
+    }
+    .panel-title {
+      font-weight: bold;
+      font-size: 1.1rem;
+      text-align: center;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      margin-top: 0;
+    }
+    .editable {
+      flex: 1;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 12px;
+      min-height: 200px;
+      outline: none;
+      background: #fff;
+      font-size: 1rem;
+      margin-top: 8px;
+    }
+    .send-btn {
+      position: fixed;
+      bottom: 12px;
+      right: 28px;
+      padding: 14px 32px;
+      font-size: 1.1rem;
+      border: none;
+      border-radius: 4px;
+      background: #0d1b24;
+      color: #fff;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+      transition: background 0.2s;
+      z-index: 10;
+    }
+    .send-btn:hover {
+      background: #182733;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-page" id="loginPage">
+    <button class="login-mic-btn" id="loginMicBtn" aria-label="Login with Logo">
+      <img src="images/LOGO1.png" alt="Eustakio Logo" style="width: 733px; height: 267px; object-fit: contain; display: block;" />
+    </button>
+  </div>
+  <div class="main-interface" id="mainInterface">
+    <div class="top-bar">
+      <button>IMPORTAR</button>
+      <button aria-label="Microphone" style="margin-left:8px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
+      </button>
+    </div>
+    <div class="container" id="splitContainer">
+      <div class="panel" id="panel1">
+        <div class="panel-title">PANEL 1</div>
+        <div class="editable" contenteditable="true" id="editable1">Edit this text...</div>
+      </div>
+      <div class="divider" id="divider">
+        <button class="arrow-btn" id="arrowRightBtn" title="Copy left to right">&#8594;</button>
+      </div>
+      <div class="panel" id="panel2">
+        <div class="templates-btn-panel-wrapper">
+          <button class="templates-btn-panel">PLANTILLAS</button>
+          <div class="templates-dropdown">
+            <div class="templates-dropdown-option">GENERAL</div>
+            <div class="templates-dropdown-option">CARDIOVASCULAR</div>
+            <div class="templates-dropdown-option">SALUD MENTAL</div>
+            <div class="templates-dropdown-option">EPICRISIS</div>
+            <div class="templates-dropdown-option">CERTIFICADO</div>
+          </div>
+        </div>
+        <div class="panel-title">PANEL 2</div>
+        <div class="editable" contenteditable="true" id="editable2">Edit this text...</div>
+      </div>
+    </div>
+    <button class="send-btn">ENVIAR</button>
+  </div>
+  <script>
+    document.getElementById('loginMicBtn').onclick = function() {
+      document.getElementById('loginPage').style.display = 'none';
+      document.getElementById('mainInterface').style.display = 'block';
+    };
+    // Splitter logic
+    const divider = document.getElementById('divider');
+    const panel1 = document.getElementById('panel1');
+    const panel2 = document.getElementById('panel2');
+    const container = document.getElementById('splitContainer');
+    let isDragging = false;
+    divider.addEventListener('mousedown', function(e) {
+      isDragging = true;
+      divider.classList.add('active');
+      document.body.style.cursor = 'col-resize';
+    });
+    document.addEventListener('mousemove', function(e) {
+      if (!isDragging) return;
+      const containerRect = container.getBoundingClientRect();
+      let offset = e.clientX - containerRect.left;
+      // Minimum and maximum panel width
+      const min = 120;
+      const max = containerRect.width - min;
+      if (offset < min) offset = min;
+      if (offset > max) offset = max;
+      panel1.style.flex = 'none';
+      panel1.style.width = offset + 'px';
+      panel2.style.flex = '1 1 0';
+      panel2.style.width = 'auto';
+    });
+    document.addEventListener('mouseup', function() {
+      if (isDragging) {
+        isDragging = false;
+        divider.classList.remove('active');
+        document.body.style.cursor = '';
+      }
+    });
+    // Arrow button logic
+    document.getElementById('arrowRightBtn').onclick = function() {
+      const leftContent = document.getElementById('editable1').innerHTML;
+      document.getElementById('editable2').innerHTML = leftContent;
+    };
+    // Dropdown toggle logic for TEMPLATES button (robust)
+    (function() {
+      const templatesWrapper = document.querySelector('.templates-btn-panel-wrapper');
+      const templatesBtn = templatesWrapper.querySelector('.templates-btn-panel');
+      const templatesDropdown = templatesWrapper.querySelector('.templates-dropdown');
+      // Toggle dropdown on button click
+      templatesBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        // Close any other open dropdowns
+        document.querySelectorAll('.templates-btn-panel-wrapper.show-dropdown').forEach(el => {
+          if (el !== templatesWrapper) el.classList.remove('show-dropdown');
+        });
+        templatesWrapper.classList.toggle('show-dropdown');
+      });
+      // Close dropdown when clicking an option
+      templatesDropdown.addEventListener('click', function(e) {
+        e.stopPropagation();
+        templatesWrapper.classList.remove('show-dropdown');
+      });
+      // Close dropdown when clicking outside
+      document.addEventListener('click', function(e) {
+        if (!templatesWrapper.contains(e.target)) {
+          templatesWrapper.classList.remove('show-dropdown');
+        }
+      });
+    })();
+    // Plantillas templates
+    const plantillaTemplates = {
+      GENERAL: 'Anamnesis\n\nExamen físico\n\n',
+      CARDIOVASCULAR: '',
+      'SALUD MENTAL': '',
+      EPICRISIS: '',
+      CERTIFICADO: ''
+    };
+    document.querySelectorAll('.templates-dropdown-option').forEach(option => {
+      option.addEventListener('click', function(e) {
+        const text = plantillaTemplates[this.textContent.trim()] || '';
+        document.getElementById('editable2').innerText = text;
+      });
+    });
+  </script>
+</body>
+</html> 
