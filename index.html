@@ -79,13 +79,13 @@
     }
     .top-bar {
       position: fixed;
-      top: 0;
+      top: 8px;
       left: 0;
       width: 100vw;
       display: flex;
       align-items: center;
-      padding: 0px 16px 0px 24px;
-      min-height: 24px;
+      padding: 8px 16px 8px 24px;
+      min-height: 48px;
       background: transparent;
       z-index: 10;
       position: relative;
@@ -96,14 +96,14 @@
     .login-mic-btn,
     .copy-btn,
     #transcribirBtn {
-      width: 85px;
-      height: 28px;
+      width: 100px;
+      height: 36px;
       background: #021927;
       color: white;
       border: none;
       border-radius: 4px;
       cursor: pointer;
-      font-size: 0.85rem;
+      font-size: 0.9rem;
       font-weight: 500;
       transition: all 0.2s ease;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
@@ -123,8 +123,8 @@
     }
     .container {
       display: flex;
-      height: calc(100vh - 24px);
-      margin-top: 24px;
+      height: calc(100vh - 64px);
+      margin-top: 64px;
       gap: 8px;
       padding: 0px 20px 20px 20px;
       box-sizing: border-box;
@@ -521,9 +521,11 @@
           <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
         </svg>
       </button>
+      <div style="flex: 1;"></div>
+      <button class="templates-btn-panel" onclick="toggleTemplatesDropdown()">PLANTILLAS</button>
       
       <!-- Dropdown de plantillas -->
-      <div class="templates-dropdown" id="templatesDropdown" style="display: none; position: absolute; top: 100%; left: 85px; background: white; border: 1px solid #ccc; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 1000; min-width: 200px;">
+      <div class="templates-dropdown" id="templatesDropdown" style="display: none; position: absolute; top: 100%; right: 0; background: white; border: 1px solid #ccc; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 1000; min-width: 200px;">
         <div class="templates-dropdown-option">GENERAL</div>
         <div class="templates-dropdown-option">CARDIOVASCULAR</div>
         <div class="templates-dropdown-option">SALUD MENTAL</div>
