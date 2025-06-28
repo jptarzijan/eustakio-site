@@ -28,7 +28,13 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def cargar_configuracion():
-    """Cargar configuración desde archivo"""
+    """Cargar configuración desde archivo o variables de entorno"""
+    # Primero intentar variables de entorno (para producción)
+    api_key = os.environ.get('OPENAI_API_KEY')
+    if api_key:
+        return {'openai_api_key': api_key, 'whisper_model': 'whisper-1'}
+    
+    # Si no hay variables de entorno, usar archivo local
     try:
         if os.path.exists(CONFIG_FILE):
             with open(CONFIG_FILE, 'r') as f:
@@ -259,7 +265,10 @@ def completar_plantilla():
 if __name__ == '__main__':
     print("🚀 Iniciando servidor de transcripción para eustakio_interface...")
     print("📁 Serviendo archivos desde:", os.getcwd())
-    print("🌐 Servidor disponible en: http://localhost:3001")
+    
+    # Obtener puerto desde variable de entorno (para producción) o usar 3001 por defecto
+    port = int(os.environ.get('PORT', 3001))
+    print(f"🌐 Servidor disponible en: http://localhost:{port}")
     print("📝 API endpoints:")
     print("   - GET  /api/config     - Obtener configuración")
     print("   - POST /api/config     - Guardar configuración")
@@ -267,4 +276,6 @@ if __name__ == '__main__':
     print("   - GET  /api/health     - Verificar estado")
     print("   - POST /api/completar-plantilla - Completar plantilla")
     
-    app.run(host='0.0.0.0', port=3001, debug=True) 
+    # En producción, usar host 0.0.0.0 y debug=False
+    debug_mode = os.environ.get('FLASK_ENV') == 'development'
+    app.run(host='0.0.0.0', port=port, debug=debug_mode) 
