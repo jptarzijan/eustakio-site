@@ -78,17 +78,16 @@
       cursor: grab;
     }
     .top-bar {
-      position: fixed;
-      top: 8px;
+      position: relative;
+      top: 0;
       left: 0;
-      width: 100vw;
+      width: 100%;
       display: flex;
       align-items: center;
       padding: 8px 16px 8px 24px;
       min-height: 48px;
       background: transparent;
       z-index: 10;
-      position: relative;
     }
     .top-bar button,
     .templates-btn-panel,
@@ -123,14 +122,14 @@
     }
     .container {
       display: flex;
-      height: calc(100vh - 64px);
-      margin-top: 64px;
-      gap: 8px;
+      height: calc(100vh - 72px);
+      margin-top: 0;
+      gap: 0;
       padding: 0px 20px 20px 20px;
       box-sizing: border-box;
+      position: relative;
     }
     .panel {
-      flex: 1;
       display: flex;
       flex-direction: column;
       background: #fff;
@@ -140,46 +139,54 @@
       position: relative;
       min-height: 0;
     }
+    .panel:first-child {
+      width: 50%;
+      flex-shrink: 0;
+    }
+    .panel:last-child {
+      flex: 1;
+    }
     .divider {
       width: 6px;
-      background: #fff;
+      background: #e0e0e0;
       cursor: col-resize;
       border-radius: 4px;
       margin: 0 2px;
       position: relative;
-      z-index: 3;
+      z-index: 10;
       transition: background 0.2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 32px;
+      min-width: 6px;
       height: 100%;
+      user-select: none;
+      flex-shrink: 0;
     }
     .divider:hover, .divider.active {
-      background: #e0e0e0;
+      background: #c0c0c0;
     }
-    .arrow-btn {
+    .divider.dragging {
+      background: #a0a0a0;
+    }
+    .arrow-bottom-btn {
       position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
+      bottom: 18px;
+      right: 18px;
+      width: 40px;
+      height: 40px;
       background: #021927;
       color: #fff;
       border: none;
       border-radius: 50%;
-      width: 32px;
-      height: 32px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       box-shadow: 0 2px 6px rgba(0,0,0,0.07);
       transition: background 0.2s;
-      z-index: 4;
-      font-size: 1.2rem;
+      z-index: 5;
+      font-size: 1.4rem;
       pointer-events: auto;
     }
-    .arrow-btn:hover {
+    .arrow-bottom-btn:hover {
       background: #0d293a;
     }
     .templates-btn-panel-wrapper {
@@ -286,28 +293,6 @@
     .top-bar button.dictating {
       background: #F44336 !important;
       color: #fff !important;
-    }
-    .arrow-bottom-btn {
-      position: absolute;
-      bottom: 18px;
-      right: 18px;
-      width: 40px;
-      height: 40px;
-      background: #021927;
-      color: #fff;
-      border: none;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.07);
-      transition: background 0.2s;
-      z-index: 5;
-      font-size: 1.4rem;
-    }
-    .arrow-bottom-btn:hover {
-      background: #0d293a;
     }
     
     /* Estilos para formularios de login */
@@ -511,10 +496,11 @@
   <div class="main-interface" id="mainInterface">
     <div class="top-bar">
       <button>IMPORTAR</button>
-      <button id="transcribirBtn" style="margin-left:6px;" onclick="transcripcionIntegrator.mostrarDialogoCarga()">TRANSCRIPCIÓN</button>
       <button id="micBtn" aria-label="Microphone" style="margin-left:6px;">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
       </button>
+      <button id="transcribirBtn" style="margin-left:6px;">TRANSCRIBIR</button>
+      <input type="file" id="audioFileInput" accept="audio/*" style="display: none;" onchange="transcribirAudio()">
       <button class="copy-btn" id="copyBtn" title="Copiar contenido al portapapeles" onclick="copiarContenido()" style="margin-left:6px;">
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
@@ -541,6 +527,8 @@
         <button class="arrow-bottom-btn" title="Completar plantilla" onclick="completarPlantillaConOpenAI()">
           <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
         </button>
+      </div>
+      <div class="divider" id="divider">
       </div>
       <div class="panel" id="panel2">
         <div class="panel-title">PANEL 2</div>
@@ -826,7 +814,15 @@
       if (usuarioActual) {
         // Agregar nombre del usuario en la barra superior
         const topBar = document.querySelector('.top-bar');
+        
+        // Primero, remover cualquier elemento de nombre de usuario existente
+        const existingNombreUsuario = topBar.querySelector('.nombre-usuario');
+        if (existingNombreUsuario) {
+          existingNombreUsuario.remove();
+        }
+        
         const nombreUsuario = document.createElement('div');
+        nombreUsuario.className = 'nombre-usuario'; // Agregar clase para identificarlo
         nombreUsuario.style.cssText = `
           margin-left: auto;
           color: #021927;
@@ -906,43 +902,76 @@
     document.getElementById('loginMicBtn').onclick = function() {
       // Ya no necesitamos esta función para el logo, pero la mantenemos por compatibilidad
     };
-    // Splitter logic
-    const divider = document.getElementById('divider');
-    const panel1 = document.getElementById('panel1');
-    const panel2 = document.getElementById('panel2');
-    const container = document.getElementById('splitContainer');
-    let isDragging = false;
-    divider.addEventListener('mousedown', function(e) {
-      isDragging = true;
-      divider.classList.add('active');
-      document.body.style.cursor = 'col-resize';
-    });
-    document.addEventListener('mousemove', function(e) {
-      if (!isDragging) return;
-      const containerRect = container.getBoundingClientRect();
-      let offset = e.clientX - containerRect.left;
-      // Minimum and maximum panel width
-      const min = 120;
-      const max = containerRect.width - min;
-      if (offset < min) offset = min;
-      if (offset > max) offset = max;
-      panel1.style.flex = 'none';
-      panel1.style.width = offset + 'px';
-      panel2.style.flex = '1 1 0';
-      panel2.style.width = 'auto';
-    });
-    document.addEventListener('mouseup', function() {
-      if (isDragging) {
-        isDragging = false;
-        divider.classList.remove('active');
-        document.body.style.cursor = '';
-      }
-    });
+    
     // Arrow button logic
     document.getElementById('arrowRightBtn').onclick = function() {
       const leftContent = document.getElementById('editable1').innerHTML;
       document.getElementById('editable2').innerHTML = leftContent;
     };
+    
+    // Very simple resizer - bypass all interference
+    const divider = document.getElementById('divider');
+    const panel1 = document.getElementById('panel1');
+    const panel2 = document.getElementById('panel2');
+    let isDragging = false;
+    let startX = 0;
+    let startWidth = 0;
+    
+    // Force divider to be clickable
+    divider.style.pointerEvents = 'auto';
+    divider.style.position = 'relative';
+    divider.style.zIndex = '9999';
+    
+    // Simple mouse events
+    divider.onmousedown = function(e) {
+      console.log('MOUSE DOWN ON DIVIDER');
+      isDragging = true;
+      startX = e.clientX;
+      startWidth = panel1.offsetWidth;
+      
+      divider.style.background = '#a0a0a0';
+      document.body.style.cursor = 'col-resize';
+      
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    };
+    
+    document.onmousemove = function(e) {
+      if (!isDragging) return;
+      
+      console.log('DRAGGING...', e.clientX);
+      const deltaX = e.clientX - startX;
+      const newWidth = startWidth + deltaX;
+      
+      // Simple bounds
+      const minWidth = 200;
+      const maxWidth = window.innerWidth - 400;
+      const clampedWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
+      
+      console.log('Setting width to:', clampedWidth);
+      panel1.style.width = clampedWidth + 'px';
+      panel1.style.flex = 'none';
+    };
+    
+    document.onmouseup = function() {
+      if (isDragging) {
+        console.log('MOUSE UP - STOPPING');
+        isDragging = false;
+        divider.style.background = '#e0e0e0';
+        document.body.style.cursor = '';
+      }
+    };
+    
+    // Prevent any interference
+    divider.addEventListener('click', function(e) {
+      e.stopPropagation();
+    });
+    
+    divider.addEventListener('selectstart', function(e) {
+      e.preventDefault();
+    });
+    
     // Dropdown toggle logic for TEMPLATES button (robust)
     (function() {
       const templatesBtn = document.querySelector('.templates-btn-panel');
@@ -1189,7 +1218,6 @@
     // Funciones para crear nueva plantilla
     function mostrarModalCrearPlantilla() {
       document.getElementById('crearPlantillaModal').style.display = 'flex';
-      document.getElementById('nombrePlantilla').focus();
     }
     
     function cerrarModalCrearPlantilla() {
@@ -1200,18 +1228,18 @@
     }
     
     function cargarPlantillaEjemplo() {
-      const ejemplo = document.getElementById('plantillaEjemplo').value;
-      const contenido = document.getElementById('contenidoPlantilla');
+      const select = document.getElementById('plantillaEjemplo');
+      const textarea = document.getElementById('contenidoPlantilla');
       
       const ejemplos = {
-        general: `<u>Identificación de paciente:</u><br> Nombre:<br> Edad:<br><br><u>Motivo de consulta:</u><br><br><u>Anmanesis próxima</u><br><br><u>Anamnesis remota</u><br>AM:<br>AQX:<br>MEDS:<br>ALERGIAS:<br>HÁBITOS:<br>GO:<br>AF:<br><br><u>Examen físico</u><br><br><u>Diagnósticos</u><br><br><u>Plan</u>`,
-        epicrisis: `EPICRISIS [SERVICIO]<br><br>Fecha: [dd/mm/aaaa]<br>Nombre: [Nombre completo]<br>RUT: [RUT completo]<br>Edad: [años]<br>FI HSR: [dd/mm]<br>FI [SERVICIO]: [dd/mm]<br><br><u>ANAMNESIS REMOTA</u><br>Médicos: [Enfermedades crónicas]<br>Fármacos: [Lista de medicamentos habituales]<br>Quirúrgicos: [Cirugías previas]<br>Alergias: [Sí / No]<br>Hábitos: [Tabaco, alcohol, drogas]<br>Hospitalizaciones recientes: [Sí / No]<br>Sociales: [Red de apoyo, nivel funcional, vivienda]<br><br><u>ANAMNESIS PRÓXIMA</u><br>[Relato del motivo de consulta y evolución reciente]<br><br><u>EXÁMENES DE LABORATORIO AL INGRESO</u><br>[Fecha]: [Lista de exámenes relevantes]<br><br><u>IMÁGENES DE INGRESO</u><br>[Fecha y tipo de imagen]: [Descripción relevante]<br><br><u>DIAGNÓSTICOS DE INGRESO</u><br>[Dx 1]<br>[Dx 2]<br>[Dx 3]<br><br><u>EVOLUCIÓN DURANTE LA HOSPITALIZACIÓN</u><br>[ESPECIALIDAD]:<br>[Resumen de evolución, decisiones clínicas]<br><br><u>DIAGNÓSTICOS DE EGRESO</u><br>[Dx principal]<br>[Dx secundarios]<br><br><u>INDICACIONES AL ALTA</u><br><u>CUIDADOS GENERALES:</u><br>[Dieta, movilidad, restricciones]<br><br><u>MEDICAMENTOS:</u><br>[Nombre, dosis, vía, frecuencia, duración]<br><br><u>CONTROLES:</u><br>[Especialidad / programa / lugar]`,
-        cardiovascular: `<u>CONSULTA CARDIOVASCULAR</u><br><br><u>Identificación:</u><br>Nombre: [Nombre completo]<br>Edad: [años]<br>RUT: [RUT completo]<br><br><u>Motivo de consulta:</u><br>[Descripción del motivo]<br><br><u>Antecedentes cardiovasculares:</u><br>HTA: [Sí/No]<br>Diabetes: [Sí/No]<br>Dislipidemia: [Sí/No]<br>Tabaco: [Sí/No]<br>Obesidad: [Sí/No]<br>Cardiopatía previa: [Sí/No]<br>Cirugía cardíaca: [Sí/No]<br><br><u>Síntomas actuales:</u><br>Dolor torácico: [Sí/No]<br>Disnea: [Sí/No]<br>Palpitaciones: [Sí/No]<br>Edema: [Sí/No]<br>Síncope: [Sí/No]<br><br><u>Examen físico cardiovascular:</u><br>PA: [mmHg]<br>FC: [lpm]<br>Ritmo: [Regular/Irregular]<br>Soplos: [Sí/No]<br>Edema: [Sí/No]<br><br><u>Exámenes complementarios:</u><br>ECG: [Normal/Anormal]<br>Radiografía de tórax: [Normal/Anormal]<br>Ecocardiograma: [Normal/Anormal]<br>Otros: [Especificar]<br><br><u>Diagnóstico:</u><br>[Diagnóstico principal]<br>[Diagnósticos diferenciales]<br><br><u>Plan de tratamiento:</u><br>[Medicamentos]<br>[Recomendaciones]<br>[Controles]`,
-        mental: `<u>CONSULTA SALUD MENTAL</u><br><br><u>Identificación:</u><br>Nombre: [Nombre completo]<br>Edad: [años]<br>RUT: [RUT completo]<br><br><u>Motivo de consulta:</u><br>[Descripción del motivo]<br><br><u>Antecedentes psiquiátricos:</u><br>Diagnósticos previos: [Listar]<br>Hospitalizaciones psiquiátricas: [Sí/No]<br>Tratamientos previos: [Listar]<br>Intentos de suicidio: [Sí/No]<br><br><u>Antecedentes familiares:</u><br>Enfermedades psiquiátricas: [Especificar]<br>Suicidios: [Sí/No]<br><br><u>Evaluación del estado mental:</u><br>Apariencia: [Descripción]<br>Conducta: [Descripción]<br>Humor: [Descripción]<br>Pensamiento: [Descripción]<br>Percepción: [Descripción]<br>Cognición: [Descripción]<br>Insight: [Descripción]<br><br><u>Escalas de evaluación:</u><br>PHQ-9: [Puntuación]<br>GAD-7: [Puntuación]<br>Otros: [Especificar]<br><br><u>Diagnóstico:</u><br>[Diagnóstico principal según DSM-5]<br>[Diagnósticos comórbidos]<br><br><u>Plan de tratamiento:</u><br>Farmacoterapia: [Medicamentos]<br>Psicoterapia: [Tipo]<br>Recomendaciones: [Listar]<br>Controles: [Frecuencia]`
+        'general': `<u>Identificación de paciente:</u><br> Nombre:<br> Edad:<br><br><u>Motivo de consulta:</u><br><br><u>Anmanesis próxima</u><br><br><u>Anamnesis remota</u><br>AM:<br>AQX:<br>MEDS:<br>ALERGIAS:<br>HÁBITOS:<br>GO:<br>AF:<br><br><u>Examen físico</u><br><br><u>Diagnósticos</u><br><br><u>Plan</u>`,
+        'epicrisis': `EPICRISIS [SERVICIO]<br><br>Fecha: [dd/mm/aaaa]<br>Nombre: [Nombre completo]<br>RUT: [RUT completo]<br>Edad: [años]<br>FI HSR: [dd/mm]<br>FI [SERVICIO]: [dd/mm]<br><br><u>ANAMNESIS REMOTA</u><br>Médicos: [Enfermedades crónicas]<br>Fármacos: [Lista de medicamentos habituales]<br>Quirúrgicos: [Cirugías previas]<br>Alergias: [Sí / No]<br>Hábitos: [Tabaco, alcohol, drogas]<br>Hospitalizaciones recientes: [Sí / No]<br>Sociales: [Red de apoyo, nivel funcional, vivienda]<br><br><u>ANAMNESIS PRÓXIMA</u><br>[Relato del motivo de consulta y evolución reciente con foco en el ingreso hospitalario, hallazgos relevantes y contexto del cuadro agudo.]<br><br><u>EXÁMENES DE LABORATORIO AL INGRESO</u><br>[Fecha]: [Lista de exámenes relevantes con sus resultados]<br><br><u>IMÁGENES DE INGRESO</u><br>[Fecha y tipo de imagen]: [Descripción relevante de hallazgos]<br><br><u>DIAGNÓSTICOS DE INGRESO</u><br>[Dx 1]<br>[Dx 2]<br>[Dx 3]<br>(...)<br><br><u>EVOLUCIÓN DURANTE LA HOSPITALIZACIÓN</u><br>[ESPECIALIDAD 1]:<br>[Resumen de evolución, decisiones clínicas, tratamientos realizados]<br><br>[ESPECIALIDAD 2]:<br>[Lo mismo, si aplica]<br><br>[ESPECIALIDAD 3]:<br>[Etc.]<br><br>(...)<br><br><u>DIAGNÓSTICOS DE EGRESO</u><br>[Dx principal]<br>[Dx secundarios]<br>[Condiciones funcionales o sociales si aplica]<br><br><u>INDICACIONES AL ALTA</u><br><u>CUIDADOS GENERALES:</u><br>[Ej.: dieta, movilidad, restricciones, cuidados en domicilio]<br><br><u>MEDICAMENTOS:</u><br><br>[Nombre, dosis, vía, frecuencia, duración]<br><br><u>CONTROLES:</u><br><br>[Especialidad / programa / lugar]<br>[GES firmado sí/no]<br>[Indicaciones de urgencia]`,
+        'cardiovascular': '<h2>NOTA CARDIOVASCULAR</h2><p><strong>Fecha:</strong> [Fecha]</p><p><strong>Paciente:</strong> [Nombre del paciente]</p><p><strong>Síntomas:</strong> [Dolor torácico, disnea, etc.]</p><p><strong>Exploración cardiovascular:</strong> [Frecuencia cardíaca, presión arterial, etc.]</p><p><strong>Electrocardiograma:</strong> [Hallazgos ECG]</p><p><strong>Diagnóstico:</strong> [Diagnóstico cardiovascular]</p><p><strong>Tratamiento:</strong> [Medicación, intervenciones]</p><p><strong>Recomendaciones:</strong> [Cambios en estilo de vida, seguimiento]</p>',
+        'mental': '<h2>NOTA DE SALUD MENTAL</h2><p><strong>Fecha:</strong> [Fecha]</p><p><strong>Paciente:</strong> [Nombre del paciente]</p><p><strong>Estado mental:</strong> [Aspecto, comportamiento, estado de ánimo]</p><p><strong>Síntomas psiquiátricos:</strong> [Descripción de síntomas]</p><p><strong>Evaluación de riesgo:</strong> [Ideación suicida, homicida, etc.]</p><p><strong>Diagnóstico:</strong> [Diagnóstico psiquiátrico]</p><p><strong>Plan de tratamiento:</strong> [Medicación, psicoterapia, etc.]</p><p><strong>Seguimiento:</strong> [Próxima cita, recomendaciones]</p>'
       };
       
-      if (ejemplo && ejemplos[ejemplo]) {
-        contenido.value = ejemplos[ejemplo];
+      if (select.value && ejemplos[select.value]) {
+        textarea.value = ejemplos[select.value];
       }
     }
     
@@ -1409,6 +1437,106 @@
     
     // Ejecutar limpieza al cargar la página (solo para debugging)
     // limpiarYRecrearUsuarioTest(); // Descomenta esta línea si necesitas resetear el usuario
+    
+    // Función para mostrar/ocultar el dropdown de plantillas
+    function toggleTemplatesDropdown() {
+      const dropdown = document.getElementById('templatesDropdown');
+      const isVisible = dropdown.style.display !== 'none';
+      
+      if (isVisible) {
+        dropdown.style.display = 'none';
+      } else {
+        dropdown.style.display = 'block';
+      }
+    }
+    
+    // Cerrar dropdown al hacer clic fuera
+    document.addEventListener('click', function(e) {
+      const dropdown = document.getElementById('templatesDropdown');
+      const templatesBtn = document.querySelector('.templates-btn-panel');
+      
+      if (!templatesBtn.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.style.display = 'none';
+      }
+    });
+    
+    // Event listener para el botón TRANSCRIBIR
+    document.getElementById('transcribirBtn').addEventListener('click', function() {
+      document.getElementById('audioFileInput').click();
+    });
+    
+    // Función para transcribir audio
+    async function transcribirAudio() {
+      const fileInput = document.getElementById('audioFileInput');
+      const file = fileInput.files[0];
+      
+      if (!file) {
+        alert('Por favor selecciona un archivo de audio');
+        return;
+      }
+      
+      // Verificar tipo de archivo
+      const allowedTypes = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/m4a', 'audio/aac', 'audio/ogg'];
+      if (!allowedTypes.includes(file.type)) {
+        alert('Tipo de archivo no soportado. Usa MP3, WAV, M4A, AAC u OGG');
+        return;
+      }
+      
+      // Verificar tamaño (25MB máximo)
+      if (file.size > 25 * 1024 * 1024) {
+        alert('El archivo es demasiado grande. El límite es 25MB');
+        return;
+      }
+      
+      // Mostrar indicador de carga
+      const transcribirBtn = document.getElementById('transcribirBtn');
+      const originalText = transcribirBtn.textContent;
+      transcribirBtn.textContent = 'TRANSCRIBIENDO...';
+      transcribirBtn.disabled = true;
+      
+      try {
+        // Crear FormData para enviar el archivo
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        // Realizar petición al servidor
+        const response = await fetch('/api/transcribir', {
+          method: 'POST',
+          body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          // Agregar la transcripción al panel izquierdo
+          const editable1 = document.getElementById('editable1');
+          const transcripcion = result.transcripcion;
+          
+          // Si ya hay contenido, agregar un salto de línea
+          if (editable1.innerHTML.trim()) {
+            editable1.innerHTML += '<br><br>';
+          }
+          
+          editable1.innerHTML += `<strong>Transcripción:</strong><br>${transcripcion}`;
+          
+          // Mostrar mensaje de éxito
+          alert(`Transcripción completada exitosamente!\n\nArchivo: ${result.archivo}\nCaracteres: ${transcripcion.length}`);
+        } else {
+          alert('Error en la transcripción: ' + result.error);
+        }
+        
+      } catch (error) {
+        console.error('Error al transcribir:', error);
+        alert('Error al transcribir el audio: ' + error.message);
+      } finally {
+        // Restaurar botón
+        transcribirBtn.textContent = originalText;
+        transcribirBtn.disabled = false;
+        
+        // Limpiar input
+        fileInput.value = '';
+      }
+    }
   </script>
   <script src="transcripcion_integration.js"></script>
 </body>
